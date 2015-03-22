@@ -12,6 +12,11 @@
  * This engine is available globally via the Engine variable and it also makes
  * the canvas' context (ctx) object globally available to make writing app.js
  * a little simpler to work with.
+ *
+ * History of Changes:
+ * 1. Added dependency on new file utility.js that references the Frogger object 
+ * 2. Added code a allow game to "pause" when it loses focus.  I reset the time
+ *          so that the bugs resume exactly where they left off.
  */
 
 var Engine = (function(global) {
@@ -22,41 +27,58 @@ var Engine = (function(global) {
     var doc = global.document,
         win = global.window,
         canvas = doc.createElement('canvas'),
-        ctx = canvas.getContext('2d'),
-        lastTime;
+        ctx = canvas.getContext('2d');
+    var lastTime;
 
-    canvas.width = 505;
-    canvas.height = 606;
+    canvas.width = Frogger.CANVAS_WIDTH;
+    canvas.height = Frogger.CANVAS_HEIGHT;
     doc.body.appendChild(canvas);
 
     /* This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
      */
     function main() {
-        /* Get our time delta information which is required if your game
-         * requires smooth animation. Because everyone's computer processes
-         * instructions at different speeds we need a constant value that
-         * would be the same for everyone (regardless of how fast their
-         * computer is) - hurray time!
-         */
-        var now = Date.now(),
-            dt = (now - lastTime) / 1000.0;
+    
+        if (Frogger.paused) {
+            // The window does not have focus (this is probably not even running!)
+            // Do not try to update/render the screen just hang out and wait 
+            setTimeout(function() {
+                requestAnimationFrame(main);
+                }, Frogger.PAUSED_CHECK_INTERVAL);
+        } else {
+            // THIS IS THE GAME LOOP!
+            /* Get our time delta information which is required if your game
+             * requires smooth animation. Because everyone's computer processes
+             * instructions at different speeds we need a constant value that
+             * would be the same for everyone (regardless of how fast their
+             * computer is) - hurray time!
+             */
 
-        /* Call our update/render functions, pass along the time delta to
-         * our update function since it may be used for smooth animation.
-         */
-        update(dt);
-        render();
+            var now = Date.now();
+            if (Frogger.restoredFromPause) {
+                // Time is "Lost In Space" set up dt=0, so bugs move from
+                // last postiion
+                Frogger.restoredFromPause = false;
+                lastTime = now;
+            }
+            var dt = (now - lastTime) / 1000.0;
 
-        /* Set our lastTime variable which is used to determine the time delta
-         * for the next time this function is called.
-         */
-        lastTime = now;
+            /* Call our update/render functions, pass along the time delta to
+             * our update function since it may be used for smooth animation.
+             */
+            update(dt);
+            render();
 
-        /* Use the browser's requestAnimationFrame function to call this
-         * function again as soon as the browser is able to draw another frame.
-         */
-        win.requestAnimationFrame(main);
+            /* Set our lastTime variable which is used to determine the time delta
+             * for the next time this function is called.
+             */
+            lastTime = now;
+
+            /* Use the browser's requestAnimationFrame function to call this
+             * function again as soon as the browser is able to draw another frame.
+             */
+            win.requestAnimationFrame(main);
+        }
     };
 
     /* This function does some initial setup that should only occur once,
@@ -154,7 +176,7 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.render();
         });
-
+        console.log("renderEntities....invoking player.render");
         player.render();
     }
 
