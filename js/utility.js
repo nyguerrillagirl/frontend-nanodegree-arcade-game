@@ -42,7 +42,6 @@ window.onblur = function() {
 
 // resume the game if window regains focus
 window.onfocus = function() {
-	console.log("LET THE GAMES BEGIN!!!");
 	Frogger.restoredFromPause = true;
 	if (Frogger.paused) {
 		Frogger.togglePaused();

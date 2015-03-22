@@ -176,7 +176,6 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.render();
         });
-        console.log("renderEntities....invoking player.render");
         player.render();
     }
 
