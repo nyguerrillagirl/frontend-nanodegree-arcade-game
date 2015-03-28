@@ -10,6 +10,7 @@ for self-checking their submission.
 I used the following websites and information to learn how to pause the game and add sound
 
 Websites:
+
 1. [HTML 5 2D game development: Introducing Snail Bait](http://www.ibm.com/developerworks/library/j-html5-game1/)
 
 2. [General HTML Information](http://www.w3schools.com/)
@@ -18,6 +19,7 @@ Websites:
 
 
 Books:
+
 1. Core HTML5 Canvas: Graphics, Animation, and Game Development
 
 2. Core HTML5 2D Game Programming
