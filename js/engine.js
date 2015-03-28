@@ -17,6 +17,8 @@
  * 1. Added dependency on new file utility.js that references the Frogger object 
  * 2. Added code a allow game to "pause" when it loses focus.  I reset the time
  *          so that the bugs resume exactly where they left off.
+ * 3. Added hit and winning sounds
+ *
  */
 
 var Engine = (function(global) {
@@ -29,9 +31,12 @@ var Engine = (function(global) {
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d');
     var lastTime;
+    var hitSound;
+    var wonSound;
 
     canvas.width = Frogger.CANVAS_WIDTH;
     canvas.height = Frogger.CANVAS_HEIGHT;
+
     doc.body.appendChild(canvas);
 
     /* This function serves as the kickoff point for the game loop itself
@@ -77,7 +82,9 @@ var Engine = (function(global) {
             /* Use the browser's requestAnimationFrame function to call this
              * function again as soon as the browser is able to draw another frame.
              */
-            win.requestAnimationFrame(main);
+            if (!Frogger.gameOver) {
+                win.requestAnimationFrame(main);
+            }
         }
     };
 
@@ -88,6 +95,8 @@ var Engine = (function(global) {
     function init() {
         reset();
         lastTime = Date.now();
+        hitSound = new Audio("sounds/hit.wav");
+        wonSound = new Audio("sounds/heart.wav");
         main();
     }
 
@@ -102,7 +111,21 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        checkCollisions();
+    }
+
+    function renderHeadsUpDisplay() {
+        ctx.save();
+        ctx.font = "20px 'Droid Sans' sans-serif";
+        ctx.fillStyle = "#0000FF";
+        if (player.won()) {
+            ctx.fillText("You won! Refresh screen to play again!", 10, 40);
+        } else if (player.lives != 0) {
+            ctx.fillText("Lives: "  + player.lives, 10, 40);
+        } else {
+            ctx.fillText("You lost! Refresh screen to start over.", 10, 40);
+        }
+        ctx.restore();
     }
 
     /* This is called by the update function  and loops through all of the
@@ -119,6 +142,29 @@ var Engine = (function(global) {
         player.update();
     }
 
+    function checkCollisions() {
+        
+        allEnemies.forEach(function(enemy) {
+            if (player.collidedWithObject(enemy)) {
+                 player.lives = Math.max(0, --player.lives);
+                 hitSound.play();
+                 console.log("player collided with enemy. Lives left: " + player.lives);
+                 // reset Player position
+                 player.moveToStart();
+          }
+        });
+
+        if ( (player.lives === 0) || (player.won()) ) {
+            console.log("Frogger.gameOver - set");
+            Frogger.gameOver = true;
+        }
+        
+        if (player.won()) {
+            wonSound.play();
+        }  
+    }
+
+ 
     /* This function initially draws the "game level", it will then call
      * the renderEntities function. Remember, this function is called every
      * game tick (or loop of the game engine) because that's how games work -
@@ -163,6 +209,8 @@ var Engine = (function(global) {
 
 
         renderEntities();
+
+        renderHeadsUpDisplay();
     }
 
     /* This function is called by the render function and is called on each game

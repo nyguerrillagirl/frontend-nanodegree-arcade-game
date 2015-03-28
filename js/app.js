@@ -7,15 +7,13 @@
 var Enemy = function(ax, ay, aSpeed) {
     // Variables applied to each of our instances go here,
     // we've provided one for you to get started
-    var x;
-    var y;
-    var speed;
     // The image/sprite for our enemies, this uses
     // a helper we've provided to easily load images
     this.sprite = 'images/enemy-bug.png';
     this.x = ax;
     this.y = ay;
     this.speed = aSpeed;
+
 };
 
 // Update the enemy's position, required method for game
@@ -34,6 +32,21 @@ Enemy.prototype.update = function(dt) {
 // Draw the enemy on the screen, required method for game
 Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+    // DEBUG - uncomment to view Enemy collision detection rect   
+    //var enemyRect = this.getCollisionRect();
+    //ctx.save();
+    //ctx.beginPath();
+    //ctx.rect(enemyRect.topX, enemyRect.topY, enemyRect.width, enemyRect.height);
+    //ctx.lineWidth = 1;
+    //ctx.strokeStyle = 'black';
+    //ctx.stroke();
+    //ctx.restore();
+    
+};
+
+Enemy.prototype.getCollisionRect = function () {
+    return new Rectangle(this.x + Frogger.ENEMY_X_RECT_OFFSET, this.y + Frogger.ENEMY_Y_RECT_OFFSET,
+        Frogger.ENEMY_ACTUAL_IMAGE_WIDTH, Frogger.ENEMY_ACTUAL_IMAGE_HEIGHT);
 };
 
 // Now write your own player class
@@ -48,16 +61,57 @@ var Player = function() {
     this.sprite = 'images/char-pink-girl.png';
     this.x = Frogger.CANVAS_WIDTH / 2 - Frogger.PLAYER_WIDTH / 2;
     this.y = 5 * 83 - 40;
+    this.lives = 3; 
+
+ 
 };
+
+Player.prototype.moveToStart = function() {
+    this.x = Frogger.CANVAS_WIDTH / 2 - Frogger.PLAYER_WIDTH / 2;
+    this.y = 5 * 83 - 40;    
+}
+Player.prototype.won = function() {
+    console.log("In Player.prototype.won. player.y = " + this.y);
+    return this.y === Frogger.PLAYER_WON_Y_LOCATION;
+}
+
 Player.prototype.update = function(dt) {
     // You should multiply any movement by the dt parameter
     // which will ensure the game runs at the same speed for
     // all computers.
+
+    // Developer note: This function was not required for this game  
+    //  since the player moves only in response to input and
+    // only moves to the middle of each grid position
 };
 
 // Draw the enemy on the screen, required method for game
 Player.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+    // Draw COLLISION bounding rectangle for the player
+    /*
+    var playerRect = this.getCollisionRect();
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(playerRect.topX, playerRect.topY, playerRect.width, playerRect.height);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'black';
+    ctx.stroke();
+    ctx.restore();
+    */
+    // END DEBUG
+};
+
+Player.prototype.getCollisionRect = function() {
+        return new Rectangle(this.x + Frogger.PLAYER_X_RECT_OFFSET, this.y + Frogger.PLAYER_Y_RECT_OFFSET,
+            Frogger.PLAYER_ACTUAL_IMAGE_WIDTH, Frogger.PLAYER_ACTUAL_IMAGE_HEIGHT);
+};
+
+Player.prototype.collidedWithObject = function(theEnemy) {
+    // Better check this bug did not get in our way!
+    var playerCollisionRect = this.getCollisionRect();
+    var enemyCollisionRect = theEnemy.getCollisionRect();
+    return playerCollisionRect.doRectsCollide(enemyCollisionRect);
 };
 
 Player.prototype.handleInput = function(strKey) {
@@ -105,7 +159,6 @@ for (var i=0; i < Frogger.NUM_ENEMIES; i++) {
 }
 
 // create row #2 enemies
-
 for (var i=0; i < Frogger.NUM_ENEMIES; i++) {
     // put some enemies 
     var anEnemy = new Enemy(0 + i * 170, Frogger.ROW2_Y, 50);
