@@ -18,6 +18,10 @@
  * 2. Added code a allow game to "pause" when it loses focus.  I reset the time
  *          so that the bugs resume exactly where they left off.
  * 3. Added hit and winning sounds
+ * March 31, 2015
+ * 4. Made Frogger a true object and instantiated a frogger
+ * 5. Reset the player to the start
+ * 6. Use Level # and increase speed of bugs at each level
  *
  */
 
@@ -33,9 +37,9 @@ var Engine = (function(global) {
     var lastTime;
     var hitSound;
     var wonSound;
-
-    canvas.width = Frogger.CANVAS_WIDTH;
-    canvas.height = Frogger.CANVAS_HEIGHT;
+  
+    canvas.width = frogger.getGameConstant("CANVAS_WIDTH");
+    canvas.height = frogger.getGameConstant("CANVAS_HEIGHT");
 
     doc.body.appendChild(canvas);
 
@@ -44,12 +48,12 @@ var Engine = (function(global) {
      */
     function main() {
     
-        if (Frogger.paused) {
+        if (frogger.isGamePaused()) {
             // The window does not have focus (this is probably not even running!)
             // Do not try to update/render the screen just hang out and wait 
             setTimeout(function() {
                 requestAnimationFrame(main);
-                }, Frogger.PAUSED_CHECK_INTERVAL);
+                }, frogger.getGameConstant("PAUSED_CHECK_INTERVAL"));
         } else {
             // THIS IS THE GAME LOOP!
             /* Get our time delta information which is required if your game
@@ -60,10 +64,10 @@ var Engine = (function(global) {
              */
 
             var now = Date.now();
-            if (Frogger.restoredFromPause) {
+            if (frogger.getRestoredFromPause()) {
                 // Time is "Lost In Space" set up dt=0, so bugs move from
                 // last postiion
-                Frogger.restoredFromPause = false;
+                frogger.setRestoredFromPause(false);
                 lastTime = now;
             }
             var dt = (now - lastTime) / 1000.0;
@@ -82,11 +86,11 @@ var Engine = (function(global) {
             /* Use the browser's requestAnimationFrame function to call this
              * function again as soon as the browser is able to draw another frame.
              */
-            if (!Frogger.gameOver) {
+            if (!frogger.isGameOver()) {
                 win.requestAnimationFrame(main);
             }
         }
-    };
+    }
 
     /* This function does some initial setup that should only occur once,
      * particularly setting the lastTime variable that is required for the
@@ -118,13 +122,23 @@ var Engine = (function(global) {
         ctx.save();
         ctx.font = "20px 'Droid Sans' sans-serif";
         ctx.fillStyle = "#0000FF";
-        if (player.won()) {
-            ctx.fillText("You won! Refresh screen to play again!", 10, 40);
-        } else if (player.lives != 0) {
+        if (player.lives !== 0) {
             ctx.fillText("Lives: "  + player.lives, 10, 40);
+            ctx.fillText("Level: " + frogger.getLevel(), 400, 40);
         } else {
-            ctx.fillText("You lost! Refresh screen to start over.", 10, 40);
+            ctx.fillText("Congrats you got to level " + frogger.getLevel() + ". Refresh screen to start over.", 8, 40);
         }
+        if (player.won()) {
+            // increment the bugs
+            frogger.incrementSpeedLevel();
+            allEnemies.forEach(function(enemy) {
+                enemy.speed = enemy.speed * frogger.getSpeedLevel();
+            });
+          // reset the player
+            player.moveToStart();
+            // update the level #
+            frogger.incrementLevel();
+        } 
         ctx.restore();
     }
 
@@ -154,9 +168,9 @@ var Engine = (function(global) {
           }
         });
 
-        if ( (player.lives === 0) || (player.won()) ) {
+        if ( (player.lives === 0) ) {
             console.log("Frogger.gameOver - set");
-            Frogger.gameOver = true;
+            frogger.setGameOver(true);
         }
         
         if (player.won()) {
@@ -232,7 +246,11 @@ var Engine = (function(global) {
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // noop
+        // Reset the player to the start and make the bugs a tad faster
+        // for the next try across the bug infested highway!
+
+
+
     }
 
     /* Go ahead and load all of the images we know we're going to need to
