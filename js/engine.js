@@ -22,6 +22,11 @@
  * 4. Made Frogger a true object and instantiated a frogger
  * 5. Reset the player to the start
  * 6. Use Level # and increase speed of bugs at each level
+ * April 5, 2015
+ * 7. I moved the detection for player.won() out of the code that renders the heads up 
+ *          display and into it's own function checkIfPlayerWon. This is called after
+ *          the screen is rendered so that the user can "see" the Mindy get to the water
+ *          and returned to the start.
  *
  */
 
@@ -77,7 +82,7 @@ var Engine = (function(global) {
              */
             update(dt);
             render();
-
+            checkIfPlayerWon();
             /* Set our lastTime variable which is used to determine the time delta
              * for the next time this function is called.
              */
@@ -128,18 +133,7 @@ var Engine = (function(global) {
         } else {
             ctx.fillText("Congrats you got to level " + frogger.getLevel() + ". Refresh screen to start over.", 8, 40);
         }
-        if (player.won()) {
-            // increment the bugs
-            frogger.incrementSpeedLevel();
-            allEnemies.forEach(function(enemy) {
-                enemy.speed = enemy.speed * frogger.getSpeedLevel();
-            });
-          // reset the player
-            player.moveToStart();
-            // update the level #
-            frogger.incrementLevel();
-        } 
-        ctx.restore();
+         ctx.restore();
     }
 
     /* This is called by the update function  and loops through all of the
@@ -150,7 +144,8 @@ var Engine = (function(global) {
      * render methods.
      */
     function updateEntities(dt) {
-        allEnemies.forEach(function(enemy) {
+        // Check if the player got won this level
+       allEnemies.forEach(function(enemy) {
             enemy.update(dt);
         });
         player.update();
@@ -172,12 +167,25 @@ var Engine = (function(global) {
             console.log("Frogger.gameOver - set");
             frogger.setGameOver(true);
         }
-        
-        if (player.won()) {
-            wonSound.play();
-        }  
-    }
 
+        
+     }
+
+     function checkIfPlayerWon() {
+        if (player.won()) {
+            // Do victory dance
+            wonSound.play();
+           // Yes. So let's increment the bugs a make life more unbearable
+            frogger.incrementSpeedLevel();
+            allEnemies.forEach(function(enemy) {
+                enemy.speed = enemy.speed * frogger.getSpeedLevel();
+            });
+            // reset the player
+            player.moveToStart();
+            // update the level #
+            frogger.incrementLevel();
+        }        
+     }
  
     /* This function initially draws the "game level", it will then call
      * the renderEntities function. Remember, this function is called every
